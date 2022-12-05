@@ -4,6 +4,9 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import study.jpadatajpa.entity.Member;
 import study.jpadatajpa.entity.Team;
@@ -96,5 +99,37 @@ public class MemberRepositoryTest {
         for (Member member : result) {
             System.out.println("member = " + member);
         }
+    }
+
+    @Test
+    public void paging() {
+
+        int age = 10;
+        int offset = 0;
+        int limit = 3;
+
+        memberRepository.save(new Member("member1", age));
+        memberRepository.save(new Member("member2", age));
+        memberRepository.save(new Member("member3", age));
+        memberRepository.save(new Member("member4", age));
+        memberRepository.save(new Member("member5", age));
+
+        PageRequest pageRequest = PageRequest.of(offset, limit, Sort.by(Sort.Direction.DESC, "username"));
+
+        Page<Member> page = memberRepository.findByAge(age, pageRequest);
+
+        List<Member> contents = page.getContent();
+        for (Member member : contents) {
+            System.out.println("member = " + member);
+        }
+
+        assertThat(contents.size()).isEqualTo(limit);
+        assertThat(page.getSize()).isEqualTo(limit);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getNumber()).isEqualTo(0); // page 숫자
+        assertThat(page.getTotalPages()).isEqualTo(2); // 총 page 숫자
+        assertThat(page.isFirst()).isEqualTo(true);
+        assertThat(page.hasNext()).isEqualTo(true);
+
     }
 }
