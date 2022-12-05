@@ -1,5 +1,7 @@
 package study.jpadatajpa.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ public class MemberRepositoryTest {
 
     @Autowired
     TeamRepository teamRepository;
+
+    @PersistenceContext
+    EntityManager em;
 
     @Test
     public void testMember() {
@@ -131,5 +136,23 @@ public class MemberRepositoryTest {
         assertThat(page.isFirst()).isEqualTo(true);
         assertThat(page.hasNext()).isEqualTo(true);
 
+    }
+
+    @Test
+    public void bulkUpdate() throws Exception {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+        memberRepository.save(new Member("member3", 20));
+        memberRepository.save(new Member("member4", 21));
+        memberRepository.save(new Member("member5", 40));
+
+        //when
+        int resultCount = memberRepository.bulkAgePlus(20);
+//        em.flush(); // 영속성 컨텍스트에 혹시나 남아 있는 변경사항을 DB에 반영
+        em.clear(); // 영속성 컨텍스트 안의 데이터를 모두 날림
+
+        //then
+        assertThat(resultCount).isEqualTo(3);
     }
 }
