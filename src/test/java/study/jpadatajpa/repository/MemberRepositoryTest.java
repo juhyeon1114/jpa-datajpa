@@ -2,7 +2,10 @@ package study.jpadatajpa.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceUnitUtil;
 import org.assertj.core.api.Assertions;
+import org.hibernate.Hibernate;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -154,5 +157,53 @@ public class MemberRepositoryTest {
 
         //then
         assertThat(resultCount).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("findMemberLazy")
+    public void findMemberLazy() throws Exception {
+        // given
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+
+        Member memberA = new Member("memberA");
+        Member memberB = new Member("memberB");
+        memberRepository.save(memberA);
+        memberRepository.save(memberB);
+
+        em.flush();
+        em.clear();
+
+        // when
+        List<Member> members = memberRepository.findAll();
+        for (Member member : members) {
+            //Hibernate 기능으로 확인
+            Hibernate.isInitialized(member.getTeam());
+
+            //JPA 표준 방법으로 확인
+            PersistenceUnitUtil util = em.getEntityManagerFactory().getPersistenceUnitUtil();
+            util.isLoaded(member.getTeam());
+        }
+
+        // then
+    }
+
+    @Test
+    @DisplayName("queryHint")
+    public void queryHint() throws Exception {
+        // given
+        Member member1 = new Member("member1", 10);
+        memberRepository.save(member1);
+        em.flush();
+        em.clear();
+
+        // when
+        Member foundMember = memberRepository.findById(member1.getId()).get();
+        foundMember.setUsername("member2");
+        em.flush();
+
+        // then
     }
 }
